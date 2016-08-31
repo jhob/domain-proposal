@@ -1,4 +1,4 @@
-import Catalog from './domain/catalog'
+import Catalog from '../domain/catalog'
 
 export default function (req, res) {
 
