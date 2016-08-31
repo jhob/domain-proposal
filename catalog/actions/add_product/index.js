@@ -12,8 +12,6 @@ export default function ({name, price}) {
     })
   }
 
-  this.cache.value = 'hello'
-
   this.actions.removeProduct({name})
 
   this.logger.info('Adding product', {name, price})
