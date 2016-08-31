@@ -15,7 +15,7 @@
   },
   "scripts": {
     "start": "babel-node main.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --require babel-register */**.spec.js"
   },
   "repository": {
     "type": "git",

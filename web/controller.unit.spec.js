@@ -11,9 +11,13 @@ const app = express().use(middleware).get('/add_product', controller)
 describe('controller', function () {
   describe('happy path', () => {
     beforeEach('stub domain', () => {
-      stubDomain('Catalog', {
+      this.unstub = stubDomain('Catalog', {
         addProduct: null
       })
+    })
+
+    afterEach('unstub domain', () => {
+      this.unstub()
     })
 
     it ('sends 200', () => {
@@ -25,15 +29,27 @@ describe('controller', function () {
 
   describe('unhappy path (domain-level error)', () => {
     beforeEach('stub domain', () => {
-      stubDomain('Catalog', {
+      this.unstub = stubDomain('Catalog', {
         addProduct: stubError({type: 'INVALID_ARGUMENTS', message: 'blah'})
       })
+    })
+
+    afterEach('unstub domain', () => {
+      this.unstub()
     })
 
     it ('sends 500', () => {
       return request(app)
         .get('/add_product')
         .expect(503, 'service_unavailable')
+    })
+  })
+
+  describe('broad stack test', () => {
+    it ('works', () => {
+      return request(app)
+        .get('/add_product')
+        .expect(200, 'added_product')
     })
   })
 })
