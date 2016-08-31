@@ -30,14 +30,58 @@ function getMakeError(name, errorTypes) {
   }
 }
 
-export default function domain ({name, actions, errorTypes}) {
-  return ({logger, metrics}) => {
-    const context = {
-      cache: {},
-      logger,
-      makeError: getMakeError(name, errorTypes),
-      metrics
+const stubs = {}
+
+function getStubbedInterface(name, errorTypes, actionNames, overrides) {
+  const out = {}
+  for (let actionName of actionNames) {
+    if (actionName in overrides) {
+      const override = overrides[actionName]
+      if (override && override._isStubbedError) {
+        out[actionName] = () => { throw override(name, errorTypes) }
+      } else {
+        out[actionName] = () => overrides[actionName]
+      }
+    } else {
+      out[actionName] = () => {
+        throw new Error(`${name}#${actionName} has been stubbed without being mocked`)
+      }
     }
-    return context.actions = bindActions(actions, context)
   }
+  return out
+}
+
+export default function registerDomain ({name, actions, errorTypes}) {
+  return ({logger, metrics}) => {
+    if (stubs[name]) {
+      return getStubbedInterface(name, errorTypes, Object.keys(actions), stubs[name])
+    } else {
+      const context = {
+        cache: {},
+        logger,
+        makeError: getMakeError(name, errorTypes),
+        metrics
+      }
+      context.actions = bindActions(actions, context)
+      Object.freeze(context)
+      return context.actions
+    }
+  }
+}
+
+export function stubDomain (name, actionOverrides) {
+  stubs[name] = actionOverrides
+  const unstub = () => {
+    delete stubs[name]
+  }
+  return unstub
+}
+
+export function stubError ({type, message, details}) {
+  const out = (name, errorTypes) => {
+    const makeError = getMakeError(name, errorTypes)
+    return makeError({type, message, details})
+  }
+  out._isStubbedError = true
+  return out
 }
